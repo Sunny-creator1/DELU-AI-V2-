@@ -1,0 +1,65 @@
+import './globals.css';
+import Link from 'next/link';
+import { getCurrentUser } from '@/lib/site';
+
+export const metadata = {
+  title: 'DELU™ | ALWAYS DELIVERS',
+  description: 'Premium commerce platform for DELU HQ.',
+};
+
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  const user = await getCurrentUser();
+
+  return (
+    <html lang="en">
+      <body>
+        <header className="topbar">
+          <div className="container topbar-inner">
+            <Link href="/" className="brand">DELU™</Link>
+            <nav className="nav" aria-label="Main navigation">
+              <Link href="/">Home</Link>
+              <Link href="/shop">Shop</Link>
+              <Link href="/about">About</Link>
+              <Link href="/support">Support</Link>
+              <Link href="/cart">Cart</Link>
+              <Link href="/account">{user ? 'My account' : 'Account'}</Link>
+              {user?.role === 'admin' ? <Link href="/admin">Admin</Link> : null}
+            </nav>
+          </div>
+        </header>
+        {children}
+        <footer className="footer">
+          <div className="container footer-grid">
+            <div>
+              <div className="brand">DELU™</div>
+              <p>ALWAYS DELIVERS</p>
+            </div>
+            <div>
+              <h4>Navigate</h4>
+              <ul>
+                <li><Link href="/shop">Shop</Link></li>
+                <li><Link href="/about">About</Link></li>
+                <li><Link href="/support">Support</Link></li>
+              </ul>
+            </div>
+            <div>
+              <h4>Policies</h4>
+              <ul>
+                <li><Link href="/privacy">Privacy</Link></li>
+                <li><Link href="/terms">Terms</Link></li>
+                <li><Link href="/shipping">Shipping</Link></li>
+              </ul>
+            </div>
+            <div>
+              <h4>Contact</h4>
+              <ul>
+                <li><Link href="/contact">Contact</Link></li>
+                <li><a href="mailto:deluhq.official@gmail.com">deluhq.official@gmail.com</a></li>
+              </ul>
+            </div>
+          </div>
+        </footer>
+      </body>
+    </html>
+  );
+}

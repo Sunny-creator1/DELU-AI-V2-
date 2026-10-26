@@ -1,0 +1,201 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String
+  name         String
+  role         String   @default("customer")
+  emailVerified Boolean @default(false)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  orders          Order[]
+  supportMessages SupportMessage[]
+  verifiedOrders  PaymentVerification[] @relation("VerifiedOrders")
+}
+
+model Category {
+  id          String    @id @default(cuid())
+  slug        String    @unique
+  name        String
+  description String?
+  products    Product[]
+  createdAt   DateTime  @default(now())
+}
+
+model Collection {
+  id          String   @id @default(cuid())
+  slug        String   @unique
+  name        String
+  description String?
+  createdAt   DateTime @default(now())
+}
+
+model Product {
+  id          String    @id @default(cuid())
+  slug        String    @unique
+  sku         String    @unique
+  name        String
+  description String
+  price       Int       @default(0)
+  salePrice   Int?
+  stock       Int       @default(0)
+  status      String    @default("draft")
+  isPublished Boolean   @default(false)
+  featured    Boolean   @default(false)
+  categoryId  String?
+  category    Category? @relation(fields: [categoryId], references: [id])
+  images      ProductMedia[]
+  variants    ProductVariant[]
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  orderItems  OrderItem[]
+}
+
+model ProductVariant {
+  id        String  @id @default(cuid())
+  productId String
+  product   Product @relation(fields: [productId], references: [id])
+  name      String
+  stock     Int     @default(0)
+  price     Int     @default(0)
+  sku       String?
+}
+
+model ProductMedia {
+  id        String  @id @default(cuid())
+  productId String
+  product   Product @relation(fields: [productId], references: [id])
+  url       String
+  type      String  @default("image")
+  alt       String?
+  order     Int     @default(0)
+}
+
+model Order {
+  id                    String              @id @default(cuid())
+  orderNumber           String              @unique
+  customerName          String
+  email                 String
+  phone                 String
+  shippingAddress       String
+  city                  String
+  state                 String
+  deliveryInstructions  String?
+  subtotal              Int                 @default(0)
+  deliveryFee           Int                 @default(0)
+  total                 Int                 @default(0)
+  paymentStatus         String              @default("awaiting_payment")
+  fulfilmentStatus      String              @default("awaiting_payment")
+  paymentAccountSnapshot String?
+  createdAt             DateTime            @default(now())
+  updatedAt             DateTime            @updatedAt
+  userId                String?
+  user                  User?               @relation(fields: [userId], references: [id])
+  items                 OrderItem[]
+  payments              PaymentVerification[]
+  deliveryEvents        DeliveryEvent[]
+  supportTickets        SupportTicket[]
+}
+
+model OrderItem {
+  id        String  @id @default(cuid())
+  orderId   String
+  order     Order   @relation(fields: [orderId], references: [id])
+  productId String
+  product   Product @relation(fields: [productId], references: [id])
+  name      String
+  quantity  Int
+  price     Int     @default(0)
+}
+
+model PaymentAccount {
+  id                 String   @id @default(cuid())
+  bankName           String
+  accountName        String
+  accountNumber      String
+  paymentInstructions String
+  active             Boolean  @default(true)
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+}
+
+model PaymentVerification {
+  id              String   @id @default(cuid())
+  orderId         String
+  order           Order    @relation(fields: [orderId], references: [id])
+  senderName      String?
+  transferRef     String?
+  status          String   @default("pending")
+  verifiedById    String?
+  verifiedBy      User?    @relation("VerifiedOrders", fields: [verifiedById], references: [id])
+  note            String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+model DeliveryEvent {
+  id        String   @id @default(cuid())
+  orderId   String
+  order     Order    @relation(fields: [orderId], references: [id])
+  event     String
+  note      String?
+  createdAt DateTime @default(now())
+}
+
+model SupportTicket {
+  id          String          @id @default(cuid())
+  ref         String          @unique
+  subject     String
+  category    String
+  status      String          @default("open")
+  customerId  String?
+  customer    User?           @relation(fields: [customerId], references: [id])
+  orderId     String?
+  order       Order?          @relation(fields: [orderId], references: [id])
+  createdAt   DateTime        @default(now())
+  messages    SupportMessage[]
+}
+
+model SupportMessage {
+  id          String        @id @default(cuid())
+  ticketId    String
+  ticket      SupportTicket @relation(fields: [ticketId], references: [id])
+  senderId    String?
+  sender      User?         @relation(fields: [senderId], references: [id])
+  content     String
+  isInternal  Boolean       @default(false)
+  createdAt   DateTime      @default(now())
+}
+
+model Setting {
+  id        String   @id @default(cuid())
+  key       String   @unique
+  value     String
+  updatedAt DateTime @updatedAt
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  actor     String
+  action    String
+  entity    String
+  details   String
+  createdAt DateTime @default(now())
+}
+
+model MediaAsset {
+  id        String   @id @default(cuid())
+  name      String
+  url       String
+  kind      String
+  createdAt DateTime @default(now())
+}
